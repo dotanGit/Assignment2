@@ -1,5 +1,25 @@
 @baseUrl = http://localhost:3000
 
+### Test: Refresh token with invalid token (should fail)
+POST {{baseUrl}}/users/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid_token_here"
+}
+
+###
+
+### Test: Logout with invalid token (should fail)
+POST {{baseUrl}}/users/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid_token_here"
+}
+
+###
+
 ################################################################################################
 ### POSTS – Emily
 ################################################################################################
@@ -51,6 +71,10 @@ Content-Type: application/json
   "message": "Updated message from Emily"
 }
 
+### Delete post (Dotan)
+DELETE {{baseUrl}}/posts/694027eb57c30698bd81688f
+ 
+###
 
 
 
