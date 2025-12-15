@@ -79,6 +79,30 @@ const login = async (req: Request, res: Response) => {
     }
 }
 
+const logOut = async (req: Request, res: Response) => {
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        return sendError(400, "Refresh token is required", res);
+    }
+    try{
+        const secret = process.env.TOKEN_SECRET || "default_secret";
+        const decoded = jwt.verify(refreshToken, secret) as { _id: string };
+        const user = await User.findById({ _id: decoded._id });
+        if(!user) {
+            return sendError(401, "User not found", res);
+        }
+        if (!user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
+            return sendError(401, "Invalid refresh token", res);
+        }
+        // Remove the refresh token from the user's list
+        user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+        await user.save();
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (err) {
+        return sendError(401, "Invalid refresh token" + err, res);
+    }
+}
+
 const refreshToken = async (req: Request, res: Response) => {
     const refreshToken = req.body.refreshToken;
     if (!refreshToken) {
@@ -115,5 +139,6 @@ const refreshToken = async (req: Request, res: Response) => {
 export default {
     register,
     login,
-    refreshToken
+    refreshToken,
+    logOut
 };

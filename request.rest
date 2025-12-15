@@ -1,36 +1,6 @@
 @baseUrl = http://localhost:3000
 
 ################################################################################################
-### USERS – Dotan
-################################################################################################
-
-### Register (Dotan)
-POST {{baseUrl}}/users/register
-Content-Type: application/json
-
-{
-  "email": "dotan@example.com",
-  "password": "password"
-}
-
-### Login (Dotan)
-POST {{baseUrl}}/users/login
-Content-Type: application/json
-
-{
-  "email": "dotan@example.com",
-  "password": "password"
-}
-
-### Refresh token (Dotan)
-POST {{baseUrl}}/users/refresh-token
-Content-Type: application/json
-
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OTQwNGU3NTM4OWRiYzQ0Zjg1NDZiM2IiLCJpYXQiOjE3NjU4MjIwNzIsImV4cCI6MTc2NjQyNjg3Mn0.Ln5NXGVpxmmofHJu_xKuc5QYPgQ6vGeQLvW5eTmzKrw"
-}
-
-################################################################################################
 ### POSTS – Emily
 ################################################################################################
 
