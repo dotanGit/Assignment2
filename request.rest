@@ -1,0 +1,107 @@
+@baseUrl = http://localhost:3000
+
+################################################################################################
+### POSTS – Emily
+################################################################################################
+
+### Create new post (Emily)
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "sender": "Emily",
+  "message": "This is my first post"
+}
+
+###
+
+### Create another post (Dotan)
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "sender": "Dotan",
+  "message": "Hello from Dotan"
+}
+
+###
+
+### Get all posts
+GET {{baseUrl}}/posts
+
+###
+
+### Get posts by Emily
+GET {{baseUrl}}/posts?sender=Emily
+
+###
+
+### Get post by id
+# replace with a real id from one of the create responses
+GET {{baseUrl}}/posts/694027eb57c30698bd81688f
+
+###
+
+### Update post (change message by Emily)
+PUT {{baseUrl}}/posts/694027eb57c30698bd81688f
+Content-Type: application/json
+
+{
+  "sender": "Emily",
+  "message": "Updated message from Emily"
+}
+
+
+
+
+################################################################################################
+### COMMENTS – Dotan
+################################################################################################
+
+### Create new comment (Dotan)
+POST {{baseUrl}}/comments/694027eb57c30698bd81688f
+Content-Type: application/json
+
+{
+  "sender": "Dotan",
+  "message": "This is my first comment"
+}
+
+###
+
+### Create another comment (Emily)
+POST {{baseUrl}}/comments/694027eb57c30698bd81688f
+Content-Type: application/json
+
+{
+  "sender": "Emily",
+  "message": "This is my second comment"
+}
+
+###
+
+### Get all comments for a post
+GET {{baseUrl}}/comments?postId=694027eb57c30698bd81688f
+
+###
+
+### Get comment by id
+GET {{baseUrl}}/comments/6940284257c30698bd816899
+
+###
+
+### Update comment (change message by Dotan)
+PUT {{baseUrl}}/comments/6940284257c30698bd816899
+Content-Type: application/json
+
+{
+  "sender": "Dotan",
+  "message": "Updated message from Dotan"
+}
+
+###
+
+### Delete comment (Dotan)
+DELETE {{baseUrl}}/comments/6940284257c30698bd816899
+
+###
