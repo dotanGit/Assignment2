@@ -23,7 +23,7 @@ class BaseController {
             }
         } catch (err) {
             console.error(err);
-            res.status(500).send("Error retrieving movies");
+            res.status(500).send("Error retrieving data");
         }
     };
 
@@ -32,13 +32,13 @@ class BaseController {
         try {
             const data = await this.model.findById(id);
             if (!data) {
-                return res.status(404).send("Movie not found");
+                return res.status(404).send("Data not found");
             } else {
                 res.json(data);
             }
         } catch (err) {
             console.error(err);
-            res.status(500).send("Error retrieving movie by ID");
+            res.status(500).send("Error retrieving data by ID");
         }
     };
 
@@ -60,7 +60,7 @@ class BaseController {
             res.status(201).json(data);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Error creating post");
+            res.status(500).send("Error creating data");
         } 
     };
 
@@ -71,7 +71,7 @@ class BaseController {
             res.status(200).json(deletedData);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Error deleting post");
+            res.status(500).send("Error deleting data");
         }
     };
 
@@ -85,7 +85,7 @@ class BaseController {
             res.json(data);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Error updating post");
+            res.status(500).send("Error updating data");
         }
     };
 };
