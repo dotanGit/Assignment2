@@ -97,6 +97,7 @@ const logOut = async (req: Request, res: Response) => {
         // Remove the refresh token from the user's list
         user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
         await user.save();
+
         res.status(200).json({ message: "Logged out successfully" });
     } catch (err) {
         return sendError(401, "Invalid refresh token" + err, res);
