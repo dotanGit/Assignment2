@@ -46,6 +46,10 @@ class BaseController {
         const postData = req.body;
         console.log(postData);
         try {
+            // Validate that message is not empty
+            if (!postData.message || postData.message.trim() === "") {
+                return res.status(400).send("Message is required");
+            }
             // If there's an id in route params and model has postId field, use it
             if (req.params.id) {
                 const schema = this.model.schema;
@@ -79,6 +83,10 @@ class BaseController {
         const id = req.params.id;
         const updatedData = req.body;
         try {
+
+            if (!updatedData.message || updatedData.message.trim() === "") {
+                return res.status(400).send("Message is required");
+            }
             const data = await this.model.findByIdAndUpdate(id, updatedData, {
                 new: true,
             });
