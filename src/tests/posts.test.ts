@@ -7,10 +7,16 @@ import { Express } from "express";
 
 let app: Express;
 let accessToken: string;
+let secondUserAccessToken: string;
 let postId = "";
 
 const testUser = {
   email: "test@user.com",
+  password: "123456",
+};
+
+const secondUser = {
+  email: "second@user.com",
   password: "123456",
 };
 
@@ -39,7 +45,19 @@ beforeAll(async () => {
   expect(loginResponse.statusCode).toBe(200);
 
   accessToken = loginResponse.body.token;
-  // testPost.sender = loginResponse.body._id;
+
+  // Register and login second user
+  const registerSecondResponse = await request(app)
+    .post("/users/register")
+    .send(secondUser);
+  expect(registerSecondResponse.statusCode).toBe(201);
+
+  const loginSecondResponse = await request(app)
+    .post("/users/login")
+    .send({ email: secondUser.email, password: secondUser.password });
+  expect(loginSecondResponse.statusCode).toBe(200);
+
+  secondUserAccessToken = loginSecondResponse.body.token;
 });
 
 afterAll(async () => {
@@ -177,6 +195,31 @@ describe("Posts API Test Suite", () => {
     expect(response.statusCode).not.toBe(200);
   });
 
+  test("Should fail to update a post created by another user", async () => {
+    // Create a post with the first user
+    const createResponse = await request(app)
+      .post("/posts")
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({ sender: "FirstUser", message: "Post by first user" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdPostId = createResponse.body._id;
+
+    // Try to update it with the second user's token
+    const updatedPost = {
+      sender: "SecondUser",
+      message: "Trying to update",
+    };
+
+    const updateResponse = await request(app)
+      .put(`/posts/${createdPostId}`)
+      .set("authorization", `Bearer ${secondUserAccessToken}`)
+      .send(updatedPost);
+
+    expect(updateResponse.statusCode).toBe(403);
+    expect(updateResponse.text).toBe("Forbidden: You are not the creator of this post");
+  });
+
   describe("DELETE /posts/:id", () => {
     test("Should delete a post successfully", async () => {
       const deleteResponse = await request(app)
@@ -196,6 +239,25 @@ describe("Posts API Test Suite", () => {
         .set("authorization", `Bearer ${accessToken}`);
       expect(deleteResponse.statusCode).toBe(500);
       expect(deleteResponse.text).toBe("Error deleting post");
+    });
+
+    test("Should fail to delete a post created by another user", async () => {
+      // Create a post with the first user
+      const createResponse = await request(app)
+        .post("/posts")
+        .set("authorization", `Bearer ${accessToken}`)
+        .send({ sender: "FirstUser", message: "Post by first user" });
+      
+      expect(createResponse.statusCode).toBe(201);
+      const createdPostId = createResponse.body._id;
+
+      // Try to delete it with the second user's token
+      const deleteResponse = await request(app)
+        .delete(`/posts/${createdPostId}`)
+        .set("authorization", `Bearer ${secondUserAccessToken}`);
+
+      expect(deleteResponse.statusCode).toBe(403);
+      expect(deleteResponse.text).toBe("Forbidden: You are not the creator of this post");
     });
   });
 });

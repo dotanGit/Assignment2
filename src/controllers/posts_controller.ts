@@ -4,8 +4,6 @@ import { AuthRequest } from "../middleware/auth_middleware";
 import { Response } from "express";
 
 
-// const postsController = new BaseController(Post);
-
 class postsController extends BaseController {
     constructor() {
         super(Post);
@@ -43,13 +41,17 @@ class postsController extends BaseController {
     };
 
 
-     //override put to prevent changing createdBy
+     //override put to prevent changing createdBy and ensure only creator can update
      async update(req: AuthRequest, res: Response) {
         const id = req.params.id;
         try {
             const post = await this.model.findById(id);
             if (!post) {
                 return res.status(404).send("Post not found");
+            }
+            // Check if the authenticated user is the creator of the post
+            if (req.user && post.createdBy.toString() !== req.user._id) {
+                return res.status(403).send("Forbidden: You are not the creator of this post");
             }
             // Prevent changing createdBy field
             if (req.body.createdBy && req.body.createdBy !== post.createdBy.toString()) {

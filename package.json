@@ -11,7 +11,6 @@
     "testComments": "tsc && jest --runInBand --detectOpenHandles --forceExit src/tests/comments.test.ts",
     "testPosts": "tsc && jest --runInBand --detectOpenHandles --forceExit src/tests/posts.test.ts",
     "testAuth": "tsc && jest --runInBand --detectOpenHandles --forceExit src/tests/auth.test.ts",
-    "test": "tsc && jest --runInBand --detectOpenHandles --forceExit",
     "coverage": "tsc && jest --runInBand --detectOpenHandles --forceExit --coverage"
   },
   "dependencies": {
