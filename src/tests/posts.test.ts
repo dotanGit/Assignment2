@@ -195,7 +195,7 @@ describe("Posts API Test Suite", () => {
         .delete(`/posts/${invalidPostId}`)
         .set("authorization", `Bearer ${accessToken}`);
       expect(deleteResponse.statusCode).toBe(500);
-      expect(deleteResponse.text).toBe("Error deleting data");
+      expect(deleteResponse.text).toBe("Error deleting post");
     });
   });
 });
