@@ -8,12 +8,18 @@ import { Express } from "express";
 
 let app: Express;
 let commentId = "";
+let secondUserAccessToken: string;
 
 const testUser = {
   email: "test@user.com",
   password: "123456",
   token: "",
   _id: "123123abcabc",
+};
+
+const secondUser = {
+  email: "second@user.com",
+  password: "123456",
 };
 
 const testPost = {
@@ -50,6 +56,19 @@ beforeAll(async () => {
   expect(loginResponse.statusCode).toBe(200);
 
   testUser.token = loginResponse.body.token;
+
+  // Register and login second user
+  const registerSecondResponse = await request(app)
+    .post("/users/register")
+    .send(secondUser);
+  expect(registerSecondResponse.statusCode).toBe(201);
+
+  const loginSecondResponse = await request(app)
+    .post("/users/login")
+    .send({ email: secondUser.email, password: secondUser.password });
+  expect(loginSecondResponse.statusCode).toBe(200);
+
+  secondUserAccessToken = loginSecondResponse.body.token;
 });
 
 afterAll(async () => {
@@ -210,9 +229,60 @@ describe("Comments Test Suite", () => {
     expect(response.body._id).toBe(commentId);
   });
 
+  test("Should fail to update a non-existent comment", async () => {
+    const nonExistentId = "67447b032ce3164be7c4412d";
+    const response = await request(app)
+      .put(`/comments/${nonExistentId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ message: "Trying to update" });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.text).toBe("Comment not found");
+  });
+
+  test("Should fail to change the creator of a comment", async () => {
+    // Create a comment first
+    const createResponse = await request(app)
+      .post(`/comments/${testComment.postId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ sender: "TestUser", message: "Test comment" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdCommentId = createResponse.body._id;
+
+    // Try to update it with a different createdBy
+    const updateResponse = await request(app)
+      .put(`/comments/${createdCommentId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ message: "Updated", createdBy: "differentUserId" });
+
+    expect(updateResponse.statusCode).toBe(400);
+    expect(updateResponse.text).toBe("Cannot change creator of the comment");
+  });
+
+  test("Should fail to update a comment created by another user", async () => {
+    // Create a comment with the first user
+    const createResponse = await request(app)
+      .post(`/comments/${testComment.postId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ sender: "FirstUser", message: "Comment by first user" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdCommentId = createResponse.body._id;
+
+    // Try to update it with the second user's token
+    const updateResponse = await request(app)
+      .put(`/comments/${createdCommentId}`)
+      .set("authorization", `Bearer ${secondUserAccessToken}`)
+      .send({ message: "Trying to update" });
+
+    expect(updateResponse.statusCode).toBe(403);
+    expect(updateResponse.text).toBe("Forbidden: You are not the creator of this comment");
+  });
+
   test("Should return error when update fails due to DB issue", async () => {
     jest
-      .spyOn(CommentModel, "findByIdAndUpdate")
+      .spyOn(CommentModel, "findById")
       .mockRejectedValueOnce(new Error("Database update error"));
 
     const response = await request(app)
@@ -221,9 +291,42 @@ describe("Comments Test Suite", () => {
       .send({ message: "Updated comment content" });
 
     expect(response.statusCode).toBe(500);
-    expect(response.text).toBe("Error updating data");
+    expect(response.text).toBe("Error updating comment");
 
     jest.restoreAllMocks();
+  });
+
+  test("Should fail to delete a non-existent comment", async () => {
+    const nonExistentId = "67447b032ce3164be7c4412d";
+
+    const response = await request(app)
+      .delete(`/comments/${nonExistentId}`)
+      .set("authorization", `Bearer ${testUser.token}`);
+
+    expect(response.statusCode).toBe(404);
+    expect(response.text).toBe("Comment not found");
+  });
+
+  test("Should successfully delete a comment", async () => {
+    // Create a comment first
+    const createResponse = await request(app)
+      .post(`/comments/${testComment.postId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ sender: "TestUser", message: "Comment to delete" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdCommentId = createResponse.body._id;
+
+    // Delete the comment
+    const deleteResponse = await request(app)
+      .delete(`/comments/${createdCommentId}`)
+      .set("authorization", `Bearer ${testUser.token}`);
+
+    expect(deleteResponse.statusCode).toBe(200);
+
+    // Verify it's deleted
+    const getResponse = await request(app).get(`/comments/${createdCommentId}`);
+    expect(getResponse.statusCode).toBe(404);
   });
 
   test("Should handle database error when deleting comment", async () => {
@@ -234,6 +337,25 @@ describe("Comments Test Suite", () => {
       .set("authorization", `Bearer ${testUser.token}`);
 
     expect(response.statusCode).toBe(500);
-    expect(response.text).toBe("Error deleting data");
+    expect(response.text).toBe("Error deleting comment");
+  });
+
+  test("Should fail to delete a comment created by another user", async () => {
+    // Create a comment with the first user
+    const createResponse = await request(app)
+      .post(`/comments/${testComment.postId}`)
+      .set("authorization", `Bearer ${testUser.token}`)
+      .send({ sender: "FirstUser", message: "Comment by first user" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdCommentId = createResponse.body._id;
+
+    // Try to delete it with the second user's token
+    const deleteResponse = await request(app)
+      .delete(`/comments/${createdCommentId}`)
+      .set("authorization", `Bearer ${secondUserAccessToken}`);
+
+    expect(deleteResponse.statusCode).toBe(403);
+    expect(deleteResponse.text).toBe("Forbidden: You are not the creator of this comment");
   });
 });

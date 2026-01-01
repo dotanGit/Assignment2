@@ -11,7 +11,11 @@ const postSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true
-    }
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Users",
+    },
   },
   {
     timestamps: true
