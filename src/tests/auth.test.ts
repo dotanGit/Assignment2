@@ -155,15 +155,25 @@ describe("Auth Tests", () => {
     expect(response.statusCode).not.toBe(201);
   });
 
-  test("Get protected API with Bearer but no token", async () => {
-    const response = await request(app)
-      .post("/posts")
-      .set("authorization", "Bearer  ")
-      .send({
-        sender: "test",
-        message: "Test post",
-      });
-    expect(response.statusCode).toBe(401);
+  test("Get protected API with Bearer but empty token after split - line 13", async () => {
+    // Test the middleware directly to bypass HTTP header normalization
+    const { authenticate } = await import("../middleware/auth_middleware");
+    const req = {
+      headers: {
+        authorization: "Bearer "  // One space, no token after
+      }
+    } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    } as any;
+    const next = jest.fn();
+
+    authenticate(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized 2" });
+    expect(next).not.toHaveBeenCalled();
   });
 
   test("Refresh Token", async () => {

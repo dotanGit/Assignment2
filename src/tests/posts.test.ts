@@ -220,6 +220,37 @@ describe("Posts API Test Suite", () => {
     expect(updateResponse.text).toBe("Forbidden: You are not the creator of this post");
   });
 
+  test("Should fail to update a non-existent post", async () => {
+    const nonExistentId = "67447b032ce3164be7c4412d";
+    const response = await request(app)
+      .put(`/posts/${nonExistentId}`)
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({ sender: "Test", message: "Trying to update" });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.text).toBe("Post not found");
+  });
+
+  test("Should fail to change the creator of a post", async () => {
+    // Create a post first
+    const createResponse = await request(app)
+      .post("/posts")
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({ sender: "TestUser", message: "Test post" });
+    
+    expect(createResponse.statusCode).toBe(201);
+    const createdPostId = createResponse.body._id;
+
+    // Try to update it with a different createdBy
+    const updateResponse = await request(app)
+      .put(`/posts/${createdPostId}`)
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({ message: "Updated", createdBy: "differentUserId" });
+
+    expect(updateResponse.statusCode).toBe(400);
+    expect(updateResponse.text).toBe("Cannot change creator of the post");
+  });
+
   describe("DELETE /posts/:id", () => {
     test("Should delete a post successfully", async () => {
       const deleteResponse = await request(app)
@@ -258,6 +289,17 @@ describe("Posts API Test Suite", () => {
 
       expect(deleteResponse.statusCode).toBe(403);
       expect(deleteResponse.text).toBe("Forbidden: You are not the creator of this post");
+    });
+
+    test("Should fail to delete a non-existent post", async () => {
+      const nonExistentId = "67447b032ce3164be7c4412d";
+
+      const deleteResponse = await request(app)
+        .delete(`/posts/${nonExistentId}`)
+        .set("authorization", `Bearer ${accessToken}`);
+
+      expect(deleteResponse.statusCode).toBe(404);
+      expect(deleteResponse.text).toBe("Post not found");
     });
   });
 });
